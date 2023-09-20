@@ -1,0 +1,31 @@
+html {
+    font-size: 12px;
+}
+
+body {
+    margin: 0;
+}
+
+.form-wrapper {
+    margin: auto;
+    max-width: 384px;
+}
+
+input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+header {
+    text-align: center;
+}
+
+nav {
+    text-align: center;
+}
+
+main {
+    margin: auto;
+    max-width: 1024px;
+    padding: 16px;
+}

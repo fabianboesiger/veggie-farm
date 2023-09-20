@@ -1,0 +1,11 @@
+#!/bin/bash
+cd client
+cargo make build
+cd ..
+
+cd server
+cargo build
+cd ..
+
+mkdir -p server/public
+/bin/cp -rf client/pkg server/public
