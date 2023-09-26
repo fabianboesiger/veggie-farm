@@ -8,6 +8,7 @@ use axum::{
 use axum_sessions::extractors::ReadableSession;
 use futures_util::{sink::SinkExt, stream::StreamExt};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
+use serde::{Deserialize, Serialize};
 use shared::{Event, EventData, SyncData, UserId, SPEED};
 use sqlx::SqlitePool;
 use std::{sync::Arc, time::Duration};
@@ -15,7 +16,6 @@ use tokio::{
     sync::{broadcast, mpsc, RwLock},
     time,
 };
-use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PartialEventData {
@@ -103,11 +103,7 @@ impl GameState {
 
             let mut rng = SmallRng::from_entropy();
 
-            while let Some(PartialEventData {
-                event,
-                user_id,
-            }) = req_receiver.recv().await
-            {
+            while let Some(PartialEventData { event, user_id }) = req_receiver.recv().await {
                 let event = match event {
                     // Valid only as server-sent events.
                     Event::Tick

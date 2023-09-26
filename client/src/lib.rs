@@ -1,7 +1,5 @@
 use seed::{prelude::*, *};
-use shared::{
-    Event, EventData, Req, Res, SyncData,
-};
+use shared::{Event, EventData, Req, Res, SyncData};
 use std::rc::Rc;
 
 #[cfg(not(debug_assertions))]
@@ -24,9 +22,7 @@ pub struct Model {
 // ------ ------
 
 fn init(_url: Url, orders: &mut impl Orders<Msg>) -> Model {
-    orders.subscribe(|subs::UrlRequested(_url, url_request)| {
-        url_request.handled()
-    });
+    orders.subscribe(|subs::UrlRequested(_url, url_request)| url_request.handled());
 
     Model {
         web_socket: create_websocket(orders),
@@ -77,7 +73,9 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
             );
 
             // Chrome doesn't invoke `on_error` when the connection is lost.
-            if (!close_event.was_clean() || close_event.code() == 4000) && model.web_socket_reconnector.is_none() {
+            if (!close_event.was_clean() || close_event.code() == 4000)
+                && model.web_socket_reconnector.is_none()
+            {
                 model.web_socket_reconnector = Some(
                     orders.stream_with_handle(streams::backoff(None, Msg::ReconnectWebSocket)),
                 );
@@ -148,17 +146,19 @@ fn decode_message(message: WebSocketMessage, msg_sender: Rc<dyn Fn(Option<Msg>)>
 //     View
 // ------ ------
 
-fn view(model: &Model) -> Vec<Node<Msg>> {
+fn view(model: &Model) -> Node<Msg> {
     if let Some(_data) = &model.state {
-        vec![
-            
-        ]
-    } else {
-        vec![
-            div![C!["loading"],
-                "Loading ..."
+        div![C!["background"],
+            div![C!["info"]],
+            div![C!["truck"]],
+            div![C!["silo"]],
+            div![C!["tractor"]],
+            div![C!["field"],
+                div![C!["veggie"]]
             ]
         ]
+    } else {
+        div![C!["loading"], "Loading ..."]
     }
 }
 

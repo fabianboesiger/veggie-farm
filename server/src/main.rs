@@ -46,15 +46,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // build our application with some routes
     let app = Router::new()
         .fallback(
-            get_service(ServeDir::new(assets_dir).append_index_html_on_directories(true))
-                /*
-                .handle_error(|error: std::io::Error| async move {
-                    (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        format!("Unhandled internal error: {}", error),
-                    )
-                }),
-                */
+            get_service(ServeDir::new(assets_dir).append_index_html_on_directories(true)), /*
+                                                                                           .handle_error(|error: std::io::Error| async move {
+                                                                                               (
+                                                                                                   StatusCode::INTERNAL_SERVER_ERROR,
+                                                                                                   format!("Unhandled internal error: {}", error),
+                                                                                               )
+                                                                                           }),
+                                                                                           */
         )
         .route("/", get(index::get_index))
         .route("/about", get(about::get_about))

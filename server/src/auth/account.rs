@@ -1,4 +1,4 @@
-use crate::{ServerError, game::GameState};
+use crate::{game::GameState, ServerError};
 use askama::{DynTemplate, Template};
 use askama_axum::Response;
 use axum::{
@@ -136,9 +136,7 @@ pub async fn post_change_username(
         Err(err) => {
             return Err(ServerError::SqliteError(err));
         }
-        Ok((user_id, )) => {
-            user_id
-        },
+        Ok((user_id,)) => user_id,
     };
 
     let result = sqlx::query(
@@ -163,7 +161,7 @@ pub async fn post_change_username(
             game_state.edit_player(user_id, change_username.username);
 
             Ok(Redirect::to("/account").into_response())
-        },
+        }
     }
 }
 

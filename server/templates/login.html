@@ -3,7 +3,7 @@
 <div class="form-wrapper">
     <h2>Login</h2>
     <form method="POST">
-        <div>
+        <div class="label-group">
             <label for="username">Username</label>
             <input id="username" type="text" name="username" value="{{ username }}">
             {% for err in username_error %}
@@ -11,7 +11,7 @@
             {% endfor %}
         </div>
 
-        <div>
+        <div class="label-group">
             <label for="password">Password</label>
             <input id="password" type="password" name="password">
             {% for err in password_error %}

@@ -8,11 +8,11 @@ use std::borrow::Cow;
 use askama::DynTemplate;
 use async_trait::async_trait;
 use axum::{
+    body::HttpBody,
     extract::FromRequest,
-    http::{self, StatusCode, Request},
+    http::{self, Request, StatusCode},
     response::{IntoResponse, Response},
     BoxError, Form,
-    body::HttpBody
 };
 use serde::de::DeserializeOwned;
 use validator::{Validate, ValidationError, ValidationErrors};
