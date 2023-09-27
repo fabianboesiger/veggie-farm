@@ -4,7 +4,7 @@ use std::{
     collections::{HashMap, VecDeque},
     path::PathBuf,
 };
-use strum::{Display, EnumCount, EnumIter, IntoEnumIterator};
+use strum::{Display, EnumCount, EnumIter, IntoEnumIterator, IntoStaticStr};
 
 #[cfg(not(debug_assertions))]
 pub const SPEED: u64 = 2;
@@ -105,6 +105,14 @@ impl State {
         }
 
         let mut rng: SmallRng = SmallRng::seed_from_u64(seed);
+
+        if let Some(user_id) = user_id {
+            self
+                .players
+                .get_mut(&user_id)?
+                .last_online = self.time;
+        }
+        
 
         match event {
             Event::Tick => {
@@ -343,7 +351,17 @@ impl Truck {
 }
 
 #[derive(
-    Serialize, Deserialize, Clone, Copy, Debug, Display, EnumCount, EnumIter, Eq, PartialEq,
+    Serialize,
+    Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    Display,
+    EnumCount,
+    EnumIter,
+    Eq,
+    PartialEq,
+    IntoStaticStr,
 )]
 #[strum(serialize_all = "title_case")]
 pub enum Veggie {
@@ -358,10 +376,6 @@ impl Veggie {
 
     pub fn value(self, qty: Quantity) -> Money {
         (QTY_TOTAL / self.qty()).pow(qty as u32)
-    }
-
-    pub fn image_name(self) -> PathBuf {
-        PathBuf::from(self.to_string().replace(" ", "_").to_lowercase()).with_extension("png")
     }
 }
 
@@ -430,7 +444,7 @@ impl Field {
     pub fn new() -> Self {
         Field {
             veggies: None,
-            max_veggies: 5,
+            max_veggies: 3,
         }
     }
 
@@ -461,7 +475,7 @@ impl Silo {
     pub fn new(rng: &mut SmallRng) -> Self {
         let mut barn = Silo {
             storage: VecDeque::new(),
-            max_storage: 9,
+            max_storage: 3,
         };
 
         barn.refill(rng);

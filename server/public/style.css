@@ -22,7 +22,7 @@
 
 @font-face {
     font-family: "Pixel Font";
-    src: url("/pixel-font.ttf"), format("ttf");
+    src: url("/pixel-font-cased.ttf"), format("ttf");
 }
 
 html {
@@ -130,14 +130,14 @@ main {
     padding: 16px;
 }
 
-.background {
+.grid {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
     grid-template-rows: auto;
     justify-content: stretch;
 }
 
-.background * {
+.grid * {
     background-repeat: no-repeat;
     background-size: cover;
     image-rendering: pixelated;
@@ -167,11 +167,20 @@ main {
     justify-content: stretch;
 }
 
-.veggie {
+.veggie1 {
     grid-column: 1;
     grid-row: 1;
     background-image: url("/assets/carrot.png");
     aspect-ratio: 1;
+    z-index: 2;
+}
+
+.veggie2 {
+    grid-column: 1;
+    grid-row: 1;
+    background-image: url("/assets/potato.png");
+    aspect-ratio: 1;
+    z-index: 1;
 }
 
 #title {

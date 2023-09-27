@@ -1,6 +1,8 @@
+use itertools::Itertools;
 use seed::{prelude::*, *};
-use shared::{Event, EventData, Req, Res, SyncData};
-use std::rc::Rc;
+use shared::{Event, EventData, Farm, Field, Req, Res, SyncData, Veggie, Silo};
+use std::{collections::HashMap, path::PathBuf, rc::Rc, iter::once};
+use strum::Display;
 
 #[cfg(not(debug_assertions))]
 const WS_URL: &str = "ws://boesiger.internet-box.ch/game/ws";
@@ -147,14 +149,16 @@ fn decode_message(message: WebSocketMessage, msg_sender: Rc<dyn Fn(Option<Msg>)>
 // ------ ------
 
 fn view(model: &Model) -> Node<Msg> {
-    if let Some(_data) = &model.state {
-        div![C!["background"],
-            div![C!["info"]],
-            div![C!["truck"]],
-            div![C!["silo"]],
-            div![C!["tractor"]],
-            div![C!["field"],
-                div![C!["veggie"]]
+    if let Some(data) = &model.state {
+
+        let player = data.state.players.get(&data.user_id).unwrap();
+        div![
+            p![format!("user id, {}", data.user_id)],
+            div![
+                C!["grid"],
+                player.farm.render().into_iter().map(|draw| div![attrs!(
+                    At::Style => draw.style()
+                )])
             ]
         ]
     } else {
@@ -169,4 +173,181 @@ fn view(model: &Model) -> Node<Msg> {
 #[wasm_bindgen(start)]
 pub fn start() {
     App::start("app", init, update, view);
+}
+
+trait Render {
+    fn render(&self) -> Vec<Draw>
+    where
+        Self: Sized;
+}
+
+impl Render for Farm {
+    fn render(&self) -> Vec<Draw>
+    where
+        Self: Sized,
+    {
+        let fields = self.fields
+            .iter()
+            .enumerate()
+            .flat_map(|(i, f)| {
+                f.render()
+                    .into_iter()
+                    .map(move |d| d.mov((i as i32 * 3) % 9, 1 + (i as i32 * 3) / 9, 0))
+            });
+
+        let silos = self.silos
+            .iter()
+            .enumerate()
+            .flat_map(|(i, f)| {
+                f.render()
+                    .into_iter()
+                    .map(move |d| d.mov(i as i32 + 3, i as i32 + 5, 0))
+            });
+        
+        silos
+            .chain(fields)
+            .collect()
+    }
+}
+
+impl Render for Field {
+    fn render(&self) -> Vec<Draw>
+    where
+        Self: Sized,
+    {
+        vec![Draw {
+            x: 0,
+            y: 0,
+            z: 0,
+            texture: Texture::Field,
+        }]
+    }
+}
+
+impl Render for Silo {
+    fn render(&self) -> Vec<Draw>
+    where
+        Self: Sized,
+    {
+        let back = once(Draw {
+            x: 0,
+            y: 0,
+            z: 0,
+            texture: Texture::SiloBackBottom,
+        })
+            .chain((1..(self.max_storage - 1)).map(|i| Draw {
+                x: 0,
+                y: -(i as i32),
+                z: 0,
+                texture: Texture::SiloBackMiddle
+            }))
+            .chain(once(Draw {
+                x: 0,
+                y: -(self.max_storage as i32 - 1),
+                z: 0,
+                texture: Texture::SiloBackTop
+            }));
+
+        let front = once(Draw {
+            x: 0,
+            y: 0,
+            z: 2,
+            texture: Texture::SiloFrontBottom,
+        })
+            .chain((1..(self.max_storage - 1)).map(|i| Draw {
+                x: 0,
+                y: -(i as i32),
+                z: 2,
+                texture: Texture::SiloFrontMiddle
+            }))
+            .chain(once(Draw {
+                x: 0,
+                y: -(self.max_storage as i32 - 1),
+                z: 2,
+                texture: Texture::SiloFrontTop
+            }));
+
+        let veggies = self.storage
+            .iter()
+            .enumerate()
+            .map(|(i, veggie)| {
+                Draw {
+                    x: 0,
+                    y: -(i as i32),
+                    z: 1,
+                    texture: Texture::Veggie(veggie.veggie())
+                }
+            });
+
+        back
+            .chain(veggies)
+            .chain(front)
+            .collect()
+    }
+}
+
+struct Draw {
+    x: i32,
+    y: i32,
+    z: i32,
+    texture: Texture,
+}
+
+impl Draw {
+    fn style(&self) -> String {
+        format!(
+            r#"
+            grid-column: {} / span {};
+            grid-row: {} / span {};
+            z-index: {};
+            background-image: url("/assets/{}");
+            aspect-ratio: {};
+        "#,
+            self.x + 1,
+            self.texture.size().0,
+            self.y + 1,
+            self.texture.size().1,
+            self.z + 1,
+            self.texture.path().to_string_lossy(),
+            self.texture.size().0 as f32 / self.texture.size().1 as f32
+        )
+    }
+
+    fn mov(mut self, dx: i32, dy: i32, dz: i32) -> Self {
+        self.x += dx;
+        self.y += dy;
+        self.z += dz;
+        self
+    }
+}
+
+#[derive(Display)]
+#[strum(serialize_all = "title_case")]
+enum Texture {
+    Field,
+    SiloBackTop,
+    SiloBackMiddle,
+    SiloBackBottom,
+    SiloFrontTop,
+    SiloFrontMiddle,
+    SiloFrontBottom,
+    Veggie(Veggie),
+}
+
+impl Texture {
+    fn path(&self) -> PathBuf {
+        match self {
+            Self::Veggie(veggie) => PathBuf::from(veggie.to_string().replace(" ", "-").to_lowercase())
+                .with_extension("png"),
+            _ => PathBuf::from(self.to_string().replace(" ", "-").to_lowercase())
+                .with_extension("png"),
+        }
+    }
+
+    fn size(&self) -> (u32, u32) {
+        match self {
+            Self::Field => (3, 3),
+            _ => (1, 1),
+        }
+    }
 }

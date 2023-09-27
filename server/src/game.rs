@@ -173,7 +173,7 @@ impl GameState {
         self.0
             .req_sender
             .send(PartialEventData {
-                event: Event::AddPlayer(user_id, username),
+                event: Event::EditPlayer(user_id, username),
                 user_id: None,
             })
             .unwrap();
